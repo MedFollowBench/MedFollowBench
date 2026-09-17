@@ -1,0 +1,20 @@
+MedFollowBench licensing
+
+Data, prompt content, annotations, metadata, schemas, and documentation are
+licensed under Creative Commons Attribution-NonCommercial 4.0 International
+(SPDX-License-Identifier: CC-BY-NC-4.0).
+
+You may share and adapt these materials for non-commercial purposes with
+attribution, a license link, and an indication of modifications. Commercial use
+requires separate permission from the relevant rights holders.
+
+Full data license: LICENSE-DATA.txt
+Official legal code: https://creativecommons.org/licenses/by-nc/4.0/legalcode
+
+Python source code in scripts/ and examples/ is licensed under the MIT License
+in LICENSE-CODE. This permission does not relicense dataset records, patient
+content, or prompt text embedded in or processed by the code.
+
+These licenses grant only rights held by the licensors. Third-party source
+materials remain subject to their applicable terms. No privacy, personality,
+trademark, or third-party model rights are granted by these licenses.
