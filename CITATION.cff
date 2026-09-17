@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this dataset, please cite it using this metadata."
+title: "MedFollowBench: A Chinese Benchmark for Proactive Spoken Medical Outbound Dialogue"
+type: dataset
+version: 1.0.0-rc6
+date-released: 2026-09-17
+authors:
+  - name: "MedFollowBench contributors"
+license: CC-BY-NC-4.0
+url: "https://github.com/iflytekmedfollowbench/MedFollowBench"
+repository-code: "https://github.com/iflytekmedfollowbench/MedFollowBench"

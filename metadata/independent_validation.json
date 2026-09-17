@@ -1,0 +1,23 @@
+{
+  "valid": true,
+  "record_counts": {
+    "data/single_turn.jsonl": 2169,
+    "data/multi_turn.jsonl": 500,
+    "prompts/doctor_agent_files": 5,
+    "prompts/doctor_agent_nonempty": 5,
+    "prompts/patient_agent_files": 1,
+    "prompts/patient_agent_nonempty": 0,
+    "prompts/evaluation_files": 4,
+    "prompts/evaluation_nonempty": 4
+  },
+  "privacy_pattern_hits": {
+    "mainland_china_mobile": 0,
+    "mainland_china_id": 0,
+    "email": 0
+  },
+  "errors": [],
+  "notes": [
+    "Zero regex hits do not replace manual disclosure review.",
+    "Dates, medical details, organization names, and rare combinations require human review."
+  ]
+}

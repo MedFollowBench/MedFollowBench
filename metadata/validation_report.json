@@ -1,0 +1,78 @@
+{
+  "valid": true,
+  "errors": [],
+  "files": [
+    {
+      "path": "data/multi_turn.jsonl",
+      "records": 500,
+      "bytes": 1768809,
+      "sha256": "f0e0f7995570c5501f797a6fa570ac2cf7513db503d8bc2b189bb49befb51308"
+    },
+    {
+      "path": "data/single_turn.jsonl",
+      "records": 2169,
+      "bytes": 17189870,
+      "sha256": "b6fbf029ee009838d565f019f7170404fa95fadd85ef5983526cd382f2d7dbc6"
+    },
+    {
+      "path": "prompts/doctor_agent/冠心病.txt",
+      "records": 1,
+      "bytes": 10503,
+      "sha256": "215e84ea36cd64d6e9d1c7e4147d0a74d7e4ef445326681446d11dba6c27210e"
+    },
+    {
+      "path": "prompts/doctor_agent/糖尿病.txt",
+      "records": 1,
+      "bytes": 7164,
+      "sha256": "3b33776b16f5704c6d231f4aebdebf2cff9e99a0378d4a059484ea00b876b6d8"
+    },
+    {
+      "path": "prompts/doctor_agent/脑梗.txt",
+      "records": 1,
+      "bytes": 9172,
+      "sha256": "5fba9fb22a042853c441c58e4bb1de1f006d2397d0b26a973cbcfa9bb8967ecb"
+    },
+    {
+      "path": "prompts/doctor_agent/颅脑损伤.txt",
+      "records": 1,
+      "bytes": 7436,
+      "sha256": "e81877c71d1447e5d9b32b32191822159bfdc61017b1aa8188476e18beb49d2c"
+    },
+    {
+      "path": "prompts/doctor_agent/高血压.txt",
+      "records": 1,
+      "bytes": 9171,
+      "sha256": "da26b599db917c26d4ee22eb48b06abda2bacb1e747d0e79a144635b798d6393"
+    },
+    {
+      "path": "prompts/evaluation/内容质量三维度.txt",
+      "records": 1,
+      "bytes": 12820,
+      "sha256": "2fa129aedad9312024d381c8503fe0684247fd115c2bb625901991c940fbc55a"
+    },
+    {
+      "path": "prompts/evaluation/多轮流程完整性.txt",
+      "records": 1,
+      "bytes": 2310,
+      "sha256": "60b7cd99375781c1f1f5ca7ff080f16030cf85d598115cb9d3f58b3195fda048"
+    },
+    {
+      "path": "prompts/evaluation/患者行为分类.txt",
+      "records": 1,
+      "bytes": 7627,
+      "sha256": "3065ed5a050757c9ccfecfdd5691d5eb7b2535e63b2ecc4a570a01cf96cb326a"
+    },
+    {
+      "path": "prompts/evaluation/提问合理性.txt",
+      "records": 1,
+      "bytes": 7742,
+      "sha256": "f61e45f4b20cc228f7f9b531e33ffcf5bfc05dd4f58da66e041e82d21cddbd89"
+    },
+    {
+      "path": "prompts/patient_agent/患者回复生成.txt",
+      "records": 1,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

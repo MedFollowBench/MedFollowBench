@@ -1,0 +1,214 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Single-turn next-response benchmark record",
+  "description": "Schema for one record in data/single_turn.jsonl. Each record contains a de-identified medical follow-up dialogue and the labels needed for next-response evaluation.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "task",
+    "script_name",
+    "patient_profile",
+    "flow_requirements",
+    "conversation",
+    "organization",
+    "patient_name",
+    "patient_behavior_label",
+    "patient_behavior_label_raw",
+    "information_nodes",
+    "prompt_components",
+    "behavior_type",
+    "behavior_subtype",
+    "main_behavior_type",
+    "source_file"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Unique identifier for the record within this dataset."
+    },
+    "task": {
+      "const": "single_turn_next_response",
+      "description": "Benchmark task identifier."
+    },
+    "script_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Name of the disease-specific follow-up script."
+    },
+    "patient_profile": {
+      "type": "string",
+      "minLength": 1,
+      "description": "De-identified patient profile supplied as task context."
+    },
+    "flow_requirements": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Complete follow-up flow and branching requirements."
+    },
+    "conversation": {
+      "$ref": "#/$defs/conversation"
+    },
+    "organization": {
+      "description": "De-identified organization placeholder, or null when unavailable.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "patient_name": {
+      "description": "De-identified patient-name placeholder, or null when unavailable.",
+      "oneOf": [
+        {
+          "type": "string",
+          "minLength": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "patient_behavior_label": {
+      "$ref": "#/$defs/patientBehaviorLabel"
+    },
+    "patient_behavior_label_raw": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Original serialized patient-behavior annotation retained for traceability."
+    },
+    "information_nodes": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Information nodes extracted from the follow-up flow."
+    },
+    "prompt_components": {
+      "$ref": "#/$defs/promptComponents"
+    },
+    "behavior_type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One or more behavior categories, separated by semicolons when multiple labels apply."
+    },
+    "behavior_subtype": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Fine-grained patient-behavior subtype."
+    },
+    "main_behavior_type": {
+      "type": "string",
+      "enum": [
+        "配合型回答",
+        "偏离型回答",
+        "提问型回答",
+        "阻抗型回答"
+      ],
+      "description": "Primary patient-behavior category."
+    },
+    "source_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Repository-relative provenance label for the source file."
+    }
+  },
+  "$defs": {
+    "conversation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_text",
+        "messages",
+        "message_count"
+      ],
+      "properties": {
+        "raw_text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Original normalized dialogue text."
+        },
+        "messages": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/message"
+          },
+          "description": "Dialogue represented as role-content messages."
+        },
+        "message_count": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of entries in messages. It must equal the array length; that cross-field constraint requires application-level validation."
+        }
+      }
+    },
+    "message": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "content"
+      ],
+      "properties": {
+        "role": {
+          "type": "string",
+          "enum": [
+            "assistant",
+            "user"
+          ]
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "patientBehaviorLabel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "患者行为",
+        "具体内容",
+        "表达风格"
+      ],
+      "properties": {
+        "患者行为": {
+          "type": "string",
+          "minLength": 1
+        },
+        "具体内容": {
+          "type": "string",
+          "minLength": 1
+        },
+        "表达风格": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "promptComponents": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "history",
+        "current_patient_reply"
+      ],
+      "properties": {
+        "history": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Conversation history preceding the current patient reply."
+        },
+        "current_patient_reply": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Patient reply for which the next doctor response is evaluated."
+        }
+      }
+    }
+  }
+}
