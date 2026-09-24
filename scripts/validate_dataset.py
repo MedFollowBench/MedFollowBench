@@ -1,111 +1,83 @@
-#!/usr/bin/env python3
-"""Validate JSONL syntax, IDs, clean prompt files, and basic privacy patterns."""
-
-from __future__ import annotations
-
+"""Validate release counts, quotas, field types, boundaries and basic PII patterns."""
+import hashlib
 import json
 import re
-import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any, Iterator
-
 
 ROOT = Path(__file__).resolve().parents[1]
+DISEASES = ("冠心病", "糖尿病", "脑梗", "颅脑损伤", "高血压")
+ASR_TYPES = ("Text Normalization Errors", "Spoken ellipsis", "Homophone Error")
+PII = re.compile(r"(?<!\d)(?:\+?86[- ]?)?1[3-9]\d{9}(?!\d)|(?<!\d)\d{17}[\dXx](?!\d)|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
+def load(path):
+    with path.open(encoding="utf-8") as stream:
+        return [json.loads(line) for line in stream if line.strip()]
 
-def records(relative_path: str) -> Iterator[tuple[int, dict[str, Any]]]:
-    with (ROOT / relative_path).open("r", encoding="utf-8") as handle:
-        for number, line in enumerate(handle, start=1):
-            yield number, json.loads(line)
-
-
-def text_values(value: Any, key: str | None = None) -> Iterator[str]:
-    if key and (key == "sha256" or key.endswith("_id") or key == "id"):
+def text_values(value, key=""):
+    if key == "id":
         return
     if isinstance(value, str):
         yield value
     elif isinstance(value, dict):
-        for child_key, child in value.items():
-            yield from text_values(child, child_key)
+        for k,v in value.items():
+            yield from text_values(v, k)
     elif isinstance(value, list):
-        for child in value:
-            yield from text_values(child, key)
+        for v in value:
+            yield from text_values(v)
 
+def disease(record):
+    found = [x for x in DISEASES if x in record["script_name"]]
+    if len(found) != 1:
+        raise ValueError("Unknown script_name: " + record["id"])
+    return found[0]
 
-def main() -> int:
-    errors: list[str] = []
-    counts: Counter[str] = Counter()
+def require(condition, message):
+    if not condition:
+        raise ValueError(message)
 
-    for path, id_key in [("data/single_turn.jsonl", "id"), ("data/multi_turn.jsonl", "id")]:
-        seen = set()
-        for line, record in records(path):
-            counts[path] += 1
-            record_id = record.get(id_key)
-            if not record_id:
-                errors.append(f"{path}:{line}: missing {id_key}")
-            elif record_id in seen:
-                errors.append(f"{path}:{line}: duplicate {id_key}={record_id}")
-            seen.add(record_id)
-
-    expected_prompts = {
-        "doctor_agent": 5,
-        "patient_agent": 1,
-        "evaluation": 4,
-    }
-    allowed_empty = {
-        "prompts/patient_agent/患者回复生成.txt",
-    }
-    prompt_paths = []
-    for category, expected_count in expected_prompts.items():
-        files = sorted((ROOT / "prompts" / category).glob("*.txt"))
-        counts[f"prompts/{category}_files"] = len(files)
-        counts[f"prompts/{category}_nonempty"] = sum(
-            bool(path.read_text(encoding="utf-8").strip()) for path in files
-        )
-        if len(files) != expected_count:
-            errors.append(f"prompts/{category}: expected {expected_count} files, found {len(files)}")
-        for path in files:
-            text = path.read_text(encoding="utf-8")
-            prompt_paths.append(path)
-            relative = path.relative_to(ROOT).as_posix()
-            if not text.strip() and relative not in allowed_empty:
-                errors.append(f"{path.relative_to(ROOT)}: empty prompt")
-            if "prompt_" in text or "source_file" in text or "occurrence_id" in text:
-                errors.append(f"{path.relative_to(ROOT)}: experiment metadata found in prompt text")
-
-    privacy_patterns = {
-        "mainland_china_mobile": re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)"),
-        "mainland_china_id": re.compile(r"(?<!\d)\d{17}[0-9Xx](?!\d)"),
-        "email": re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"),
-    }
-    privacy_hits = Counter()
-    for path in ["data/single_turn.jsonl", "data/multi_turn.jsonl"]:
-        for _line, record in records(path):
-            for text in text_values(record):
-                for label, pattern in privacy_patterns.items():
-                    privacy_hits[label] += len(pattern.findall(text))
-    for path in prompt_paths:
-        text = path.read_text(encoding="utf-8")
-        for label, pattern in privacy_patterns.items():
-            privacy_hits[label] += len(pattern.findall(text))
-
-    report = {
-        "valid": not errors,
-        "record_counts": dict(counts),
-        "privacy_pattern_hits": dict(privacy_hits),
-        "errors": errors[:100],
-        "notes": [
-            "Zero regex hits do not replace manual disclosure review.",
-            "Dates, medical details, organization names, and rare combinations require human review.",
-        ],
-    }
-    report_path = ROOT / "metadata" / "independent_validation.json"
-    report_path.parent.mkdir(parents=True, exist_ok=True)
-    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(report, ensure_ascii=False, indent=2))
-    return 0 if not errors else 1
-
+def validate(root=ROOT):
+    summary = {}
+    all_data = {}
+    for filename, expected, task in (("single_turn.jsonl",2169,"single_turn_next_response"),("single_turn_asr.jsonl",600,"single_turn_next_response"),("multi_turn.jsonl",500,"multi_turn_dialogue_simulation")):
+        path = root / "data" / filename
+        records = load(path)
+        require(len(records) == expected, f"{filename}: expected {expected}, got {len(records)}")
+        require(len({r["id"] for r in records}) == expected, filename + ": duplicate ids")
+        diseases = Counter()
+        for row in records:
+            require(row.get("task") == task, "Unexpected task: " + row["id"])
+            require(bool(row.get("flow_requirements")), "Empty protocol: " + row["id"])
+            diseases[disease(row)] += 1
+            require(not any(PII.search(s) for s in text_values(row)), "Possible direct identifier: " + row["id"])
+            if task == "single_turn_next_response":
+                conv = row["conversation"]
+                msgs = conv["messages"]
+                require(bool(msgs) and msgs[-1]["role"] == "user", "No terminal patient response: " + row["id"])
+                require(conv["message_count"] == len(msgs), "Wrong message_count: " + row["id"])
+                require(all(m["role"] in ("assistant","user") and isinstance(m["content"],str) and m["content"].strip() for m in msgs), "Invalid message: " + row["id"])
+                require(msgs[-1]["content"] == row["prompt_components"]["current_patient_reply"], "Current response mismatch: " + row["id"])
+                require("target_information" not in row, "Session target in turn-level record: " + row["id"])
+            else:
+                require(isinstance(row.get("target_information"),dict) and bool(row["target_information"]), "Missing target information: " + row["id"])
+                require(bool(row.get("information_nodes")) and bool(row.get("detailed_flow_requirements")), "Missing session protocol: " + row["id"])
+        summary[filename] = {"records":len(records),"disease_counts":dict(diseases),"sha256":hashlib.sha256(path.read_bytes()).hexdigest()}
+        all_data[filename] = records
+    asr = all_data["single_turn_asr.jsonl"]
+    quota = Counter((r["asr_type"],disease(r)) for r in asr)
+    require(set(r["asr_type"] for r in asr) == set(ASR_TYPES), "Unexpected ASR labels")
+    require(len(quota) == 15 and all(x == 40 for x in quota.values()), "ASR disease quotas must be 40 per cell")
+    main = all_data["single_turn.jsonl"]
+    mapping = {"配合型回答":"Cooperative","偏离型回答":"Non-aligned","阻抗型回答":"Non-aligned","提问型回答":"Inquisitive"}
+    behaviors = Counter(mapping[r["main_behavior_type"]] for r in main)
+    require(behaviors == {"Cooperative":1000,"Non-aligned":726,"Inquisitive":443}, "Main behavior counts differ")
+    sessions = all_data["multi_turn.jsonl"]
+    require(Counter(disease(r) for r in sessions) == {d:100 for d in DISEASES}, "Session disease counts differ")
+    require(sum(bool(r["patient_profile"]) for r in sessions) == 250, "Session profile availability differs")
+    summary["asr_counts"] = dict(Counter(r["asr_type"] for r in asr))
+    summary["behavior_counts"] = dict(behaviors)
+    # This scanner is a regression check, not proof of complete anonymization.
+    return summary
 
 if __name__ == "__main__":
-    sys.exit(main())
+    print(json.dumps(validate(), ensure_ascii=False, indent=2))

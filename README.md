@@ -1,104 +1,88 @@
----
-language:
-  - zh
-license: cc-by-nc-4.0
-task_categories:
-  - text-generation
-  - conversational
-tags:
-  - healthcare
-  - outbound-call
-  - benchmark
-  - multi-turn-dialogue
-pretty_name: MedFollowBench
-size_categories:
-  - 1K<n<10K
----
-
 # MedFollowBench
 
-A Chinese benchmark for proactive spoken medical outbound dialogue. This release contains **2,169 turn-level evaluation cases** and **500 session-level case specifications**, together with available physician and evaluator prompts, data-loading examples, and validation scripts.
+**A Chinese benchmark for behavior-adaptive protocol completion in spoken medical outbound dialogue.**
 
-**Current scope:** the patient-simulator prompt and model weights, complete model/evaluator configurations, and end-to-end experiment reproduction code are not included in this release. See [evaluation notes](docs/evaluation.md) for the available components and limitations.
+MedFollowBench evaluates both the quality of the next physician response and protocol coverage across a full conversation. It covers coronary heart disease, diabetes, cerebral infarction, traumatic brain injury, and hypertension.
 
-这是一个面向中文医疗随访外呼研究的开放数据发布候选包。数据采用 UTF-8 JSONL，提示词采用逐字抽取的纯文本文件，适合直接加载到 Hugging Face Datasets、Python 或主流数据仓库。
+## Data
 
-## 发布范围
+| File | Task | Records |
+| --- | --- | ---: |
+| [`data/single_turn.jsonl`](data/single_turn.jsonl) | Next-response evaluation; disease and patient-behavior analyses | 2,169 |
+| [`data/single_turn_asr.jsonl`](data/single_turn_asr.jsonl) | Spoken/ASR condition analysis of the next response | 600 |
+| [`data/multi_turn.jsonl`](data/multi_turn.jsonl) | Session specifications for interactive evaluation | 500 |
 
-| 文件 | 记录数 | 来源 | 内容 |
-| --- | ---: | --- | --- |
-| `data/single_turn.jsonl` | 2,169 | `五个慢性病按照行为标签筛选后数据.xlsx` | 单轮下一回复任务、画像、流程、历史对话、患者行为标签与提示词组件 |
-| `data/multi_turn.jsonl` | 500 | `实验2_多轮推理任务/话术_画像_抽取.jsonl` | 五个病种各100条多轮评测病例，包含画像与随访流程 |
-| `prompts/doctor_agent/` | 5 | 既有单轮模型输入 | 冠心病、糖尿病、脑梗、颅脑损伤、高血压各一份原文 Prompt |
-| `prompts/patient_agent/` | 0 份可用 | 原始指令尚未提供 | 保留一个空占位文件，不作为可运行提示词 |
-| `prompts/evaluation/` | 4 | 既有评测输入与结果 | 内容质量、提问合理性、患者行为分类为原文；多轮流程完整性根据既有裁判结论与分析提炼 |
+- **Patient behavior:** 1,000 Cooperative, 726 Non-aligned, and 443 Inquisitive cases in the main turn-level set. The stored labels `偏离型回答` and `阻抗型回答` both map to Non-aligned.
+- **Spoken/ASR conditions:** 200 Text Normalization Errors, 200 Spoken ellipsis, and 200 Homophone Error cases, with 40 cases per medical condition in each group. The `asr_type` label describes the **current (last) patient response**, interpreted with its preceding context. These are separate evaluation groups, not matched clean/noisy pairs; Text Normalization Errors is not a noise-free baseline.
+- **Sessions:** 100 specifications per medical condition; 250 include a physician-visible profile and 250 do not.
 
-## 评测任务
+The spoken/ASR file is a separate turn-level evaluation set and is not wholly contained in the 2,169-case behavior set. It may share cases or dialogue context with the main set; do not treat these files as disjoint training/test splits. Behavior labels and spoken/ASR labels describe different aspects of a response. Missing behavior labels in the spoken/ASR file are `null`, not inferred labels.
 
-本 benchmark 包含单轮评测集（2,169 条）和多轮评测集（500 条），分别用于下一轮医生回复生成与评测、完整随访对话生成与流程评测。不设置训练集或验证集。
+## Quick start
 
-## 数据格式
-
-每行是一个独立 JSON 对象。单轮数据的对话同时保留：
-
-- `conversation.raw_text`：原始文本，不改写内容。
-- `conversation.messages`：规范化消息列表，角色为 `assistant`（医生）或 `user`（患者）。
-- `source_file`：原始来源文件，可结合 `metadata/source_manifest.json` 校验。
-
-多轮数据是 500 条评测病例输入，包含 `patient_profile`、`information_nodes` 和 `detailed_flow_requirements`，不混入任何模型生成结果。
-
-## 快速读取
-
-需要 Python 3.10 或更高版本。内置脚本仅使用标准库，无需安装第三方依赖。
-
-在项目根目录运行：
+Python 3.10+; no third-party packages are required for loading, prompt rendering, or validation.
 
 ```bash
-python3 examples/quickstart.py
-python3 examples/quickstart.py --task multi_turn
+python scripts/validate_dataset.py
+python examples/quickstart.py
+python -m unittest discover -s tests
 ```
 
-示例输出任务记录数、病种分布及首条样本。完整统计见 [docs/statistics.md](docs/statistics.md)。
+Load records directly:
 
 ```python
 import json
 
-with open("data/single_turn.jsonl", encoding="utf-8") as f:
-    first_record = json.loads(next(f))
-
-print(first_record["conversation"]["messages"])
+with open("data/single_turn_asr.jsonl", encoding="utf-8") as stream:
+    cases = [json.loads(line) for line in stream if line.strip()]
+homophone_cases = [x for x in cases if x["asr_type"] == "Homophone Error"]
 ```
 
-## 复现与校验
+## Record format and input boundaries
 
-在项目根目录运行：
+All files are UTF-8 JSON Lines: one JSON object per line. Existing record identifiers are retained for matching results; identifiers are not model inputs.
 
-```bash
-python3 scripts/validate_dataset.py
-```
+| Field | Meaning |
+| --- | --- |
+| `id`, `task`, `script_name` | Record identifier, task, and medical-condition protocol |
+| `patient_profile` | Available physician-visible profile; empty when not provided |
+| `flow_requirements` | Follow-up protocol provided to the physician model |
+| `conversation.messages` | Turn-level dialogue prefix; `assistant` = physician, `user` = patient |
+| `prompt_components.history` / `current_patient_reply` | History before the last patient response / the current response |
+| `main_behavior_type`, `patient_behavior_label` | Behavior annotations; not provided to the physician model |
+| `asr_type` | Spoken/ASR label, only in the spoken/ASR file; not provided to the physician model |
+| `information_nodes`, `detailed_flow_requirements` | Structured protocol fields for session setup and evaluation |
+| `target_information` | Patient-side case information for the simulator; **never expose it to the evaluated physician model** |
 
-检查 JSONL、唯一 ID、提示词文件数量、非空约束和基础敏感标识模式；报告写入 `metadata/independent_validation.json`。
+Do not pass whole JSON records into a model prompt. For turn-level evaluation, provide only the available profile, protocol, and dialogue prefix, then generate one physician response. Internal behavior annotations and other reference fields remain hidden. The prompt helpers in [`scripts/render_prompts.py`](scripts/render_prompts.py) enforce this separation.
 
-重新抽取需要原始数据文件；公开包可直接读取，无需重新抽取。原始来源见 `metadata/source_manifest.json`。
+## Evaluation
 
-```bash
-python3 scripts/extract_dataset.py --root "/path/to/source" --output "/tmp/benchmark-rebuild"
-```
+| Metric | What it measures |
+| --- | --- |
+| **HCC — Human-Centered Communication** | Percentage of responses rated highest on content quality, profile grounding, and linguistic appropriateness |
+| **IA — Inquiry Appropriateness** | Percentage of next-turn inquiries or dialogue decisions receiving the highest contextual-reasonableness rating; reasonable changes in inquiry order are allowed |
+| **PCC — Protocol Coverage Completion** | Percentage of sessions covering every applicable protocol inquiry; an item is covered when explicitly asked or already volunteered. Conditional follow-ups are activated by observed patient responses. |
 
-## 项目配套文件
+HCC/IA are evaluated on independent turn-level cases; PCC is evaluated on interactive sessions. PCC is not an average of turn-level IA and does not require every patient answer to be usable. The released rubric specifies the detailed boundary cases.
 
-- [examples/quickstart.py](examples/quickstart.py)：读取单轮、多轮数据。
-- [docs/statistics.md](docs/statistics.md)：样本数、病种、行为类别与空画像统计。
-- [CONTRIBUTING.md](CONTRIBUTING.md)：反馈与贡献方式。
-- [requirements.txt](requirements.txt)：运行环境与依赖说明。
+The paper uses three independent judges: HCC/IA pass by majority vote, and PCC passes only with unanimous completion. [`scripts/score_judgments.py`](scripts/score_judgments.py) implements this aggregation for saved judge outputs; it does not make network calls or supply model credentials.
 
-评测输入与目前复现范围见 [docs/evaluation.md](docs/evaluation.md)，评测待确认事项见 [docs/release_checklist.md](docs/release_checklist.md)。
+## Prompts and patient simulator
 
-更完整的字段、来源和伦理说明见 `DATASET_CARD.md`。
+- [`prompts/doctor_agent/`](prompts/doctor_agent/): five disease-specific physician prompts.
+- [`prompts/evaluation/`](prompts/evaluation/): HCC, IA, and PCC rubrics.
+- [`prompts/patient_agent/`](prompts/patient_agent/): patient-response prompt.
+- **Patient-simulator API: forthcoming.** The public inference endpoint and client instructions will be added here when available. No simulator weights or live API endpoint are included in this release.
 
-## License / 使用许可
+The same simulator configuration should be used across compared physician models. Session reproduction additionally needs the released simulator API and its configuration; loading the session specifications alone does not run the interactive evaluation.
 
-- **Data and prompt content:** [CC BY-NC 4.0](LICENSE-DATA.txt). Sharing and adaptation are permitted for non-commercial purposes with attribution; commercial use requires separate permission.
-- **Python source code:** [MIT](LICENSE-CODE). This code license does not grant commercial rights over the data or prompt content.
+## Privacy and intended use
 
-数据及提示词内容可用于非商业研究与评测，须保留署名、许可说明并标明修改。商业使用需另行授权。数据未经临床有效性认证，不应将其视为临床建议或可直接部署的医疗系统。引用信息见 [CITATION.cff](CITATION.cff)。
+The release contains de-identified text records and prompts, not source audio or private source spreadsheets. Identifying text is replaced by bracketed placeholders. Please do not attempt re-identification. This benchmark is for research and evaluation, not for clinical diagnosis, treatment, or deployment to patients. Report any suspected privacy issue without posting the identifying text publicly.
+
+## License and citation
+
+Data, annotations, prompts, schemas, and documentation retain the repository's **CC BY-NC 4.0** license; scripts and examples retain the **MIT** license. See [`LICENSE`](LICENSE), [`LICENSE-DATA.txt`](LICENSE-DATA.txt), and [`LICENSE-CODE`](LICENSE-CODE). Preserve attribution and check the applicable license before reuse.
+
+Use [`CITATION.cff`](CITATION.cff) for citation metadata. The canonical repository is [MedFollowBench/MedFollowBench](https://github.com/MedFollowBench/MedFollowBench).

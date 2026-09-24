@@ -1,139 +1,64 @@
 {
-  "dataset_name": "MedFollowBench",
-  "license": "CC-BY-NC-4.0",
-  "code_license": "MIT",
-  "repository": "https://github.com/iflytekmedfollowbench/MedFollowBench",
-  "version": "1.0.0-rc6",
-  "build_date": "2026-09-15",
-  "scope": {
-    "single_turn_source": "五个慢性病按照行为标签筛选后数据.xlsx",
-    "multi_turn_source": "实验2_多轮推理任务/话术_画像_抽取.jsonl",
-    "prompt_categories": [
-      "5 extracted doctor_agent prompts",
-      "empty patient_agent prompt file",
-      "3 extracted evaluation prompts",
-      "1 derived multi-turn evaluation prompt"
-    ]
-  },
-  "counts": {
-    "single_turn": 2169,
-    "multi_turn": 500,
-    "doctor_agent_prompts_available": 5,
-    "patient_agent_prompts_available": 0,
-    "evaluation_prompts_available": 4,
-    "empty_prompt_files": 1
-  },
-  "prompt_availability": {
-    "doctor_agent_prompts": {
-      "status": "available",
-      "count": 5,
-      "organization": "one verbatim extracted prompt per disease"
+  "name": "MedFollowBench",
+  "version": "1.1.0",
+  "release_date": "2026-09-24",
+  "repository": "https://github.com/MedFollowBench/MedFollowBench",
+  "data_files": {
+    "single_turn.jsonl": {
+      "records": 2169,
+      "disease_counts": {
+        "冠心病": 457,
+        "糖尿病": 372,
+        "脑梗": 443,
+        "颅脑损伤": 427,
+        "高血压": 470
+      },
+      "sha256": "08d5e6fa0b3a8984d482e13392ab441dae7a72168de59e12fe5553c4ac79ce56"
     },
-    "patient_agent_prompts": {
-      "status": "not_found_empty_file",
-      "count": 0,
-      "note": "The source files do not contain the original patient-agent prompt. The corresponding file is intentionally empty."
+    "single_turn_asr.jsonl": {
+      "records": 600,
+      "disease_counts": {
+        "高血压": 120,
+        "冠心病": 120,
+        "颅脑损伤": 120,
+        "脑梗": 120,
+        "糖尿病": 120
+      },
+      "sha256": "0cd1abd185504b1b6fe36a175d69a51a4f51aee0e2437d79097d4b2b1ec1aaa3"
     },
-    "evaluation_prompts": {
-      "status": "available_with_one_derived_prompt",
-      "count": 4,
-      "verbatim_types": [
-        "content-quality",
-        "question-reasonableness",
-        "patient-behavior classification"
-      ],
-      "derived_types": [
-        "multi-turn completeness, distilled from stored judge labels and reasoning"
-      ]
+    "multi_turn.jsonl": {
+      "records": 500,
+      "disease_counts": {
+        "冠心病": 100,
+        "糖尿病": 100,
+        "脑梗": 100,
+        "颅脑损伤": 100,
+        "高血压": 100
+      },
+      "sha256": "2443345db9f75ef5ddef723d2508500c4e03cfb065f7a2e013e7c0495d71d323"
     }
   },
-  "validation": {
-    "valid": true,
-    "errors": [],
-    "files": [
-      {
-        "path": "data/multi_turn.jsonl",
-        "records": 500,
-        "bytes": 1768809,
-        "sha256": "f0e0f7995570c5501f797a6fa570ac2cf7513db503d8bc2b189bb49befb51308"
-      },
-      {
-        "path": "data/single_turn.jsonl",
-        "records": 2169,
-        "bytes": 17189870,
-        "sha256": "b6fbf029ee009838d565f019f7170404fa95fadd85ef5983526cd382f2d7dbc6"
-      },
-      {
-        "path": "prompts/doctor_agent/冠心病.txt",
-        "records": 1,
-        "bytes": 10503,
-        "sha256": "215e84ea36cd64d6e9d1c7e4147d0a74d7e4ef445326681446d11dba6c27210e"
-      },
-      {
-        "path": "prompts/doctor_agent/糖尿病.txt",
-        "records": 1,
-        "bytes": 7164,
-        "sha256": "3b33776b16f5704c6d231f4aebdebf2cff9e99a0378d4a059484ea00b876b6d8"
-      },
-      {
-        "path": "prompts/doctor_agent/脑梗.txt",
-        "records": 1,
-        "bytes": 9172,
-        "sha256": "5fba9fb22a042853c441c58e4bb1de1f006d2397d0b26a973cbcfa9bb8967ecb"
-      },
-      {
-        "path": "prompts/doctor_agent/颅脑损伤.txt",
-        "records": 1,
-        "bytes": 7436,
-        "sha256": "e81877c71d1447e5d9b32b32191822159bfdc61017b1aa8188476e18beb49d2c"
-      },
-      {
-        "path": "prompts/doctor_agent/高血压.txt",
-        "records": 1,
-        "bytes": 9171,
-        "sha256": "da26b599db917c26d4ee22eb48b06abda2bacb1e747d0e79a144635b798d6393"
-      },
-      {
-        "path": "prompts/evaluation/内容质量三维度.txt",
-        "records": 1,
-        "bytes": 12820,
-        "sha256": "2fa129aedad9312024d381c8503fe0684247fd115c2bb625901991c940fbc55a"
-      },
-      {
-        "path": "prompts/evaluation/多轮流程完整性.txt",
-        "records": 1,
-        "bytes": 2310,
-        "sha256": "60b7cd99375781c1f1f5ca7ff080f16030cf85d598115cb9d3f58b3195fda048"
-      },
-      {
-        "path": "prompts/evaluation/患者行为分类.txt",
-        "records": 1,
-        "bytes": 7627,
-        "sha256": "3065ed5a050757c9ccfecfdd5691d5eb7b2535e63b2ecc4a570a01cf96cb326a"
-      },
-      {
-        "path": "prompts/evaluation/提问合理性.txt",
-        "records": 1,
-        "bytes": 7742,
-        "sha256": "f61e45f4b20cc228f7f9b531e33ffcf5bfc05dd4f58da66e041e82d21cddbd89"
-      },
-      {
-        "path": "prompts/patient_agent/患者回复生成.txt",
-        "records": 1,
-        "bytes": 0,
-        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-      }
-    ]
+  "behavior_counts": {
+    "Non-aligned": 726,
+    "Inquisitive": 443,
+    "Cooperative": 1000
   },
-  "evaluation_tasks": {
-    "single_turn": {
-      "purpose": "single_turn_next_response_evaluation",
-      "records": 2169
-    },
-    "multi_turn": {
-      "purpose": "multi_turn_dialogue_evaluation",
-      "records": 500
-    }
+  "spoken_asr_counts": {
+    "Spoken ellipsis": 200,
+    "Text Normalization Errors": 200,
+    "Homophone Error": 200
   },
-  "partition_note": "Both files are evaluation sets for different benchmark tasks. No training or validation partition is provided."
+  "asr_cases_per_disease_per_condition": 40,
+  "session_profile_counts": {
+    "present": 250,
+    "absent": 250
+  },
+  "patient_simulator": {
+    "access": "public inference API",
+    "status": "forthcoming"
+  },
+  "licenses": {
+    "data_and_prompts": "CC-BY-NC-4.0",
+    "code": "MIT"
+  }
 }

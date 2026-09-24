@@ -1,57 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Multi-turn dialogue simulation benchmark record",
-  "description": "Schema for one record in data/multi_turn.jsonl. Each record defines the context and process constraints for a complete medical follow-up dialogue simulation.",
+  "title": "MedFollowBench session specification",
   "type": "object",
-  "additionalProperties": false,
-  "required": [
-    "id",
-    "task",
-    "script_name",
-    "patient_profile",
-    "flow_requirements",
-    "information_nodes",
-    "detailed_flow_requirements",
-    "source_file"
-  ],
+  "required": ["id", "task", "script_name", "patient_profile", "flow_requirements", "information_nodes", "detailed_flow_requirements", "target_information"],
   "properties": {
-    "id": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Unique identifier for the record within this dataset."
-    },
-    "task": {
-      "const": "multi_turn_dialogue_simulation",
-      "description": "Benchmark task identifier."
-    },
-    "script_name": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Name of the disease-specific follow-up script."
-    },
-    "patient_profile": {
-      "type": "string",
-      "description": "De-identified patient profile. An empty string means that no profile was supplied for the case."
-    },
-    "flow_requirements": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Complete follow-up flow and branching requirements."
-    },
-    "information_nodes": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Ordered information nodes that the simulated dialogue should cover."
-    },
-    "detailed_flow_requirements": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Detailed branching, follow-up, and safety requirements for the dialogue."
-    },
-    "source_file": {
-      "type": "string",
-      "minLength": 1,
-      "description": "Repository-relative provenance label for the source file."
-    }
-  }
+    "id": {"type": "string", "minLength": 1},
+    "task": {"const": "multi_turn_dialogue_simulation"},
+    "script_name": {"type": "string"},
+    "patient_profile": {"type": "string"},
+    "flow_requirements": {"type": "string", "minLength": 1},
+    "information_nodes": {"type": "string", "minLength": 1},
+    "detailed_flow_requirements": {"type": "string", "minLength": 1},
+    "target_information": {"type": "object", "minProperties": 1, "additionalProperties": {"type": "string"}, "description": "Simulator-only patient state; excluded from physician-model inputs."}
+  },
+  "additionalProperties": false
 }
